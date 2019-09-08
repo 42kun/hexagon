@@ -11,7 +11,7 @@ public class HexMapEditor : MonoBehaviour
 
     private void Awake()
     {
-        colors = new Color[] { Color.white, Color.black, Color.yellow, Color.blue };
+        colors = new Color[] { Color.white, Color.red, Color.yellow, Color.blue };
         SelectColor(0);
     }
 
@@ -25,9 +25,9 @@ public class HexMapEditor : MonoBehaviour
     }
     void HandleInput()
     {
-        Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        if(Physics.Raycast(inputRay,out hit))
+        Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition); //在鼠标点击位置画一条射线
+        RaycastHit hit; //接收射线与物体碰撞信息
+        if(Physics.Raycast(inputRay,out hit)) //out表示引用
         {
             hexGrid.ColorCell(hit.point, activeColor);
         }

@@ -2,6 +2,8 @@
 using UnityEngine;
 
 [System.Serializable]
+
+//处理和计算位置信息
 public struct HexCoordinates
 {
 	[SerializeField]

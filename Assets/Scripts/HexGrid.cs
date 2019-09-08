@@ -51,18 +51,42 @@ public class HexGrid : MonoBehaviour
         position.y = 0;
         position.z = z * (HexMetrics.outerRadius * 1.5f);
 
-        //HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab);
-        //cell.transform.SetParent(transform, false);
-        //cell.transform.localPosition = position;
-        HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab,position,Quaternion.identity,transform);
+        HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab);
+        cell.transform.SetParent(transform, false);
+        cell.transform.localPosition = position;
+        //HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab,position,Quaternion.identity,transform);
         cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
         cell.color = defaultColor;
 
-        //放置cellLabelPrefab
+        if (x > 0)
+        {
+            cell.SetNeighbor(HexDirection.W, cells[i - 1]);
+        }
+
+        //偶数行
+        if ((z & 1) == 0 && z!=0)
+        {
+            cell.SetNeighbor(HexDirection.SE, cells[i - width]);
+            if (i % width != 0)
+            {
+                cell.SetNeighbor(HexDirection.SW, cells[i - width - 1]);
+            }
+        }
+        //奇数行
+        if ((z & 1) == 1)
+        {
+            cell.SetNeighbor(HexDirection.SW, cells[i - width]);
+            if ((i + 1) % width != 0)
+            {
+                cell.SetNeighbor(HexDirection.SE, cells[i - width + 1]);
+            }
+        }
+
+        ////放置cellLabelPrefab
         Text label = Instantiate<Text>(cellLabelPrefab);
         label.rectTransform.SetParent(gridCanvans.transform, false);
         label.rectTransform.anchoredPosition = new Vector2(position.x, position.z);
-        //Text label = Instantiate<Text>(cellLabelPrefab,new Vector2(position.x,position.z),Quaternion.identity,gridCanvans.transform);
+        //Text label = Instantiate<Text>(cellLabelPrefab, new Vector2(position.x, position.z), Quaternion.identity, gridCanvans.transform);
         label.text = cell.coordinates.ToStringOnSparateLines();
     }
 
