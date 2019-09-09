@@ -48,7 +48,6 @@ public class HexMapEditor : MonoBehaviour
 
     public void SetElevation()
     {
-        Debug.Log(slider.value);
         activeElevation = (int)slider.value;
     }
 

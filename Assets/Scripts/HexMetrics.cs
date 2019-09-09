@@ -16,7 +16,14 @@ public static class HexMetrics
 
     //标准高度
     public const float elevationStep = 5f;
-
+    //每个斜坡插值数量（梯形数量）
+    public const int terracesPerSlope = 2;
+    //每个斜坡由于插值被划分的数量（每个梯形占两个部分，最后一个尖角占一个部分）
+    public const int terraceSteps = terracesPerSlope * 2 + 1;
+    //每部分水平方向上的比例
+    public const float horizontalTerraceStepSize = 1f / terraceSteps;
+    //
+    public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);
 
     //六顶点坐标
     static Vector3[] corners =
@@ -61,6 +68,27 @@ public static class HexMetrics
         return (corners[(int)d] + corners[(int)d + 1]) * blendFactor;
     }
 
+    /// <summary>
+    /// 生成插值后的坐标
+    /// </summary>
+    /// <param name="a">插值起点</param>
+    /// <param name="b">插值终点</param>
+    /// <param name="step">插值时的步数</param>
+    /// <returns></returns>
+    public static Vector3 TerraceLerp(Vector3 a,Vector3 b,int step)
+    {
+        float h = step * HexMetrics.horizontalTerraceStepSize;
+        a.x += (b.x - a.x) * h;
+        a.z += (b.x - a.x) * h;
+        //只在奇数步上将y之提高
+        float v = ((step + 1) / 2) * HexMetrics.verticalTerraceStepSize;
+        a.y += (b.y - a.y) * v;
+        return a;
+    }
 
-
+    public static Color TerraceLerp(Color a,Color b,int step)
+    {
+        float h = step * HexMetrics.horizontalTerraceStepSize;
+        return Color.Lerp(a, b, h);
+    }
 }
