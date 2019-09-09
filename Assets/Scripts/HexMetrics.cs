@@ -14,6 +14,9 @@ public static class HexMetrics
     //内部混合部分
     public const float blendFactor = 1 - solidFactor;
 
+    //标准高度
+    public const float elevationStep = 5f;
+
 
     //六顶点坐标
     static Vector3[] corners =
