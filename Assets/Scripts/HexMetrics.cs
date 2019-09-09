@@ -20,10 +20,16 @@ public static class HexMetrics
     public const int terracesPerSlope = 2;
     //每个斜坡由于插值被划分的数量（每个梯形占两个部分，最后一个尖角占一个部分）
     public const int terraceSteps = terracesPerSlope * 2 + 1;
-    //每部分水平方向上的比例
+    //每步水平方向上的比例
     public const float horizontalTerraceStepSize = 1f / terraceSteps;
-    //
+    //每步垂直方向上的比例
     public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);
+
+    //连接情况(平坦，倾斜，陡峭）
+    public enum HexEdgeType
+    {
+        Flat,Slope,Cliff
+    }
 
     //六顶点坐标
     static Vector3[] corners =
@@ -69,7 +75,7 @@ public static class HexMetrics
     }
 
     /// <summary>
-    /// 生成插值后的坐标
+    /// 生成插值每步的坐标
     /// </summary>
     /// <param name="a">插值起点</param>
     /// <param name="b">插值终点</param>
@@ -79,16 +85,35 @@ public static class HexMetrics
     {
         float h = step * HexMetrics.horizontalTerraceStepSize;
         a.x += (b.x - a.x) * h;
-        a.z += (b.x - a.x) * h;
+        a.z += (b.z - a.z) * h;
         //只在奇数步上将y之提高
         float v = ((step + 1) / 2) * HexMetrics.verticalTerraceStepSize;
         a.y += (b.y - a.y) * v;
         return a;
     }
 
+    /// <summary>
+    /// 生成插值每步的颜色
+    /// </summary>
+    /// <param name="a">起点颜色</param>
+    /// <param name="b">终点颜色</param>
+    /// <param name="step">步数</param>
+    /// <returns></returns>
     public static Color TerraceLerp(Color a,Color b,int step)
     {
         float h = step * HexMetrics.horizontalTerraceStepSize;
         return Color.Lerp(a, b, h);
+    }
+
+    //输入两个高度，返回其相对边界类型
+    public static HexEdgeType GetHexEdgeType(int elevation1,int elevation2)
+    {
+        int delta = System.Math.Abs(elevation1 - elevation2);
+        switch (delta)
+        {
+            case 0:return HexEdgeType.Flat;
+            case 1:return HexEdgeType.Slope;
+            default:return HexEdgeType.Cliff;
+        }
     }
 }

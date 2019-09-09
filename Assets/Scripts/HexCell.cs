@@ -47,5 +47,12 @@ public class HexCell : MonoBehaviour
         cell.neighbors[(int)direction.Opposite()] = this;
     }
 
+    //获取边界类型
+    public HexMetrics.HexEdgeType GetEdgeType (HexDirection d)
+    {
+        return HexMetrics.GetHexEdgeType(
+            elevation,
+            neighbors[(int)d].Elevation);
+    }
 
 }

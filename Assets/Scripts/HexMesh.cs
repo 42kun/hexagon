@@ -88,11 +88,6 @@ public class HexMesh : MonoBehaviour
             v3.y = v4.y = neighbor.Elevation * HexMetrics.elevationStep;
 
             TriangulateEdgeTerraces(v1, v2, cell, v3, v4, neighbor);
-            //AddQuad(v1, v2, v3, v4);
-            //Color brightColor = (cell.color + neighbor.color) * 0.5f;
-            //AddQuadColor(
-            //    cell.color,
-            //    neighbor.color);
 
             //处理三角形连接
             HexCell nextNeighbor = cell.GetNeighbor(direction.Next());
@@ -106,10 +101,9 @@ public class HexMesh : MonoBehaviour
         }
     }
 
+    //添加连接桥并阶梯化
     void TriangulateEdgeTerraces(Vector3 beginLeft,Vector3 beginRight,HexCell beginCell,Vector3 endLeft,Vector3 endRight,HexCell endCell)
     {
-        //AddQuad(beginLeft, beginRight, endLeft, endRight);
-        //AddQuadColor(beginCell.color, endCell.color);
 
         Vector3 v1 = HexMetrics.TerraceLerp(beginLeft, endLeft, 1);
         Vector3 v2 = HexMetrics.TerraceLerp(beginRight, endRight, 1);
@@ -117,7 +111,7 @@ public class HexMesh : MonoBehaviour
 
         AddQuad(beginLeft, beginRight, v1, v2);
         AddQuadColor(beginCell.color, c1);
-        for (int i = 2; i <=HexMetrics.terraceSteps; i++)
+        for (int i = 2; i <= HexMetrics.terraceSteps; i++)
         {
             Color c2 = HexMetrics.TerraceLerp(beginCell.color, endCell.color, i);
             Vector3 v3 = HexMetrics.TerraceLerp(beginLeft, endLeft, i);
