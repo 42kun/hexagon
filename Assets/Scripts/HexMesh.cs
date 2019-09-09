@@ -87,7 +87,17 @@ public class HexMesh : MonoBehaviour
             //将对面连接点添加高度修正
             v3.y = v4.y = neighbor.Elevation * HexMetrics.elevationStep;
 
-            TriangulateEdgeTerraces(v1, v2, cell, v3, v4, neighbor);
+            //限制只在倾斜时进行阶梯化
+            if(cell.GetEdgeType(direction) == HexMetrics.HexEdgeType.Slope)
+            {
+                TriangulateEdgeTerraces(v1, v2, cell, v3, v4, neighbor);
+            }
+            else
+            {
+                AddQuad(v1, v2, v3, v4);
+                AddQuadColor(cell.color, neighbor.color);
+            }
+
 
             //处理三角形连接
             HexCell nextNeighbor = cell.GetNeighbor(direction.Next());
@@ -95,8 +105,7 @@ public class HexMesh : MonoBehaviour
             {
                 Vector3 v5 = v2 + HexMetrics.GetBirdge(direction.Next());
                 v5.y = nextNeighbor.Elevation * HexMetrics.elevationStep;
-                AddTriangle(v2, v4, v5);
-                AddTriangleColor(cell.color, neighbor.color, nextNeighbor.color);
+                TriangulateCorner(v2, cell, v4, neighbor, v5, nextNeighbor);
             }
         }
     }
@@ -122,6 +131,15 @@ public class HexMesh : MonoBehaviour
             v1 = v3;
             v2 = v4;
         }
+    }
+
+    //添加连接三角形并阶梯化
+    void TriangulateCorner(Vector3 bottom,HexCell bottomCell,Vector3 left,HexCell leftCell,Vector3 right,HexCell rightCell)
+    {
+        AddTriangle(bottom, left, right);
+        AddTriangleColor(bottomCell.color, leftCell.color, rightCell.color);
+        //TODO:处理三角旋转
+        //TODO:根据不同的三角高度关系分别处理连接处情况
     }
 
     //添加一个三角形
