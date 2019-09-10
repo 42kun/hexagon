@@ -88,7 +88,7 @@ public class HexMesh : MonoBehaviour
             v3.y = v4.y = neighbor.Elevation * HexMetrics.elevationStep;
 
             //限制只在倾斜时进行阶梯化
-            if(cell.GetEdgeType(direction) == HexMetrics.HexEdgeType.Slope)
+            if(cell.GetEdgeType(direction) == HexEdgeType.Slope)
             {
                 TriangulateEdgeTerraces(v1, v2, cell, v3, v4, neighbor);
             }
@@ -105,7 +105,29 @@ public class HexMesh : MonoBehaviour
             {
                 Vector3 v5 = v2 + HexMetrics.GetBirdge(direction.Next());
                 v5.y = nextNeighbor.Elevation * HexMetrics.elevationStep;
-                TriangulateCorner(v2, cell, v4, neighbor, v5, nextNeighbor);
+                //TriangulateCorner(v2, cell, v4, neighbor, v5, nextNeighbor);
+                //找出最小的一个cell，然后顺时针将三个cell传入
+                if(cell.Elevation <= neighbor.Elevation)
+                {
+                    if (cell.Elevation <= nextNeighbor.Elevation)
+                    {
+                        TriangulateCorner(v2, cell, v4, neighbor, v5, nextNeighbor);
+                    }
+                    else
+                    {
+                        TriangulateCorner(v5, nextNeighbor, v2, cell, v4, neighbor);
+                    }
+                }else
+                {
+                    if (neighbor.Elevation <= nextNeighbor.Elevation)
+                    {
+                        TriangulateCorner(v4, neighbor, v5, nextNeighbor, v2, cell);
+                    }
+                    else
+                    {
+                        TriangulateCorner(v5, nextNeighbor, v2, cell, v4, neighbor);
+                    }
+                }
             }
         }
     }
@@ -136,12 +158,182 @@ public class HexMesh : MonoBehaviour
     //添加连接三角形并阶梯化
     void TriangulateCorner(Vector3 bottom,HexCell bottomCell,Vector3 left,HexCell leftCell,Vector3 right,HexCell rightCell)
     {
-        AddTriangle(bottom, left, right);
-        AddTriangleColor(bottomCell.color, leftCell.color, rightCell.color);
-        //TODO:处理三角旋转
-        //TODO:根据不同的三角高度关系分别处理连接处情况
+        //AddTriangle(bottom, left, right);
+        //AddTriangleColor(bottomCell.color, leftCell.color, rightCell.color);
+        //bottom最低，然后以顺时针排列
+        //注意考虑渲染顶点顺时针排列
+        HexEdgeType leftEdgeType = bottomCell.GetEdgeType(leftCell);
+        HexEdgeType rightEdgeType = bottomCell.GetEdgeType(rightCell);
+
+        if(leftEdgeType == HexEdgeType.Flat && rightEdgeType == HexEdgeType.Flat)
+        {
+            TriangulateCornerNoTerraces(bottom, bottomCell, left, leftCell, right, rightCell);
+            //AddTriangle(bottom, left, right);
+            //AddTriangleColor(bottomCell.color, leftCell.color, rightCell.color);
+        }else if(leftEdgeType == HexEdgeType.Flat && rightEdgeType == HexEdgeType.Slope)
+        {
+            TriangulateCornerFlatWithSlope( bottom, bottomCell,left, leftCell, right, rightCell);
+        }
+        else if(leftEdgeType == HexEdgeType.Slope && rightEdgeType == HexEdgeType.Flat)
+        {
+            TriangulateCornerFlatWithSlope(right, rightCell,bottom, bottomCell, left, leftCell);
+        }
+        else if(leftEdgeType == HexEdgeType.Flat && rightEdgeType == HexEdgeType.Cliff)
+        {
+            TriangulateCornerNoTerraces(bottom, bottomCell, left, leftCell, right, rightCell);
+        }
+        else if(leftEdgeType == HexEdgeType.Cliff && rightEdgeType == HexEdgeType.Flat)
+        {
+            TriangulateCornerNoTerraces(right, rightCell, bottom, bottomCell, left, leftCell);
+        }
+        else if(leftEdgeType == HexEdgeType.Slope && rightEdgeType == HexEdgeType.Slope)
+        {
+            TriangulateCornerSlopeWithSlope(bottom, bottomCell, left, leftCell, right, rightCell);
+        }else if(leftEdgeType == HexEdgeType.Slope && rightEdgeType == HexEdgeType.Cliff)
+        {
+
+        }else if(leftEdgeType == HexEdgeType.Cliff && rightEdgeType == HexEdgeType.Slope)
+        {
+
+        }else if(leftEdgeType == HexEdgeType.Cliff && rightEdgeType == HexEdgeType.Cliff)
+        {
+            TriangulateCornerNoTerraces(bottom, bottomCell, left, leftCell, right, rightCell);
+        }
+
     }
 
+    /// <summary>
+    /// 处理fs的情况。其中vs为较高的一点
+    /// 需要以顺时针添加节点
+    /// </summary>
+    /// <param name="v1"></param>
+    /// <param name="c1"></param>
+    /// <param name="v2"></param>
+    /// <param name="c2"></param>
+    /// <param name="vs"></param>
+    /// <param name="cs"></param>
+    void TriangulateCornerFlatWithSlope(Vector3 v1, HexCell c1, 
+        Vector3 v2, HexCell c2, Vector3 vs, HexCell cs)
+    {
+        //Debug.Log(v1.ToString()+","+v2.ToString()+","+vs.ToString());
+        Vector3 v3 = HexMetrics.TerraceLerp(v1, vs, 1);
+        Vector3 v4 = HexMetrics.TerraceLerp(v2, vs, 1);
+        Color color1 = HexMetrics.TerraceLerp(c1.color, cs.color, 1);
+        Color color2 = HexMetrics.TerraceLerp(c2.color, cs.color, 1);
+        AddQuad(v3, v4,v1, v2);
+        AddQuadColor( color1, color2, c1.color, c2.color);
+
+        for(int i = 2; i < HexMetrics.terraceSteps; i++)
+        {
+            Vector3 v33 = HexMetrics.TerraceLerp(v1, vs, i);
+            Vector3 v44 = HexMetrics.TerraceLerp(v2, vs, i);
+            Color color3 = HexMetrics.TerraceLerp(c1.color, cs.color, i);
+            Color color4 = HexMetrics.TerraceLerp(c2.color, cs.color, i);
+            AddQuad(v33, v44, v3, v4);
+            AddQuadColor(color3, color4, color1, color2);
+            v3 = v33;
+            v4 = v44;
+            color1 = color3;
+            color2 = color4;
+        }
+
+        AddTriangle(v3, v4, vs);
+        AddTriangleColor(color1,color2,cs.color);
+    }
+
+    /// <summary>
+    /// 不进行阶梯化,cc可以是最高顶点,需要以顺时针添加顶点
+    /// </summary>
+    /// <param name="v1"></param>
+    /// <param name="c1"></param>
+    /// <param name="v2"></param>
+    /// <param name="c2"></param>
+    /// <param name="vc"></param>
+    /// <param name="cc"></param>
+    void TriangulateCornerNoTerraces(Vector3 v1, HexCell c1,
+        Vector3 v2, HexCell c2, Vector3 vc, HexCell cc)
+    {
+        AddTriangle(v1,v2,vc);
+        AddTriangleColor(c1.color, c2.color, cc.color);
+    }
+
+    /// <summary>
+    /// 处理ss情况，需要以顺时针添加顶点
+    /// </summary>
+    /// <param name="bottom"></param>
+    /// <param name="bottomCell"></param>
+    /// <param name="left"></param>
+    /// <param name="leftCell"></param>
+    /// <param name="right"></param>
+    /// <param name="rightCell"></param>
+    void TriangulateCornerSlopeWithSlope(Vector3 bottom,HexCell bottomCell,Vector3 left,HexCell leftCell,Vector3 right,HexCell rightCell)
+    {
+        Vector3 v3 = HexMetrics.TerraceLerp(bottom, left, 1);
+        Vector3 v4 = HexMetrics.TerraceLerp(bottom, right, 1);
+        Color c1 = HexMetrics.TerraceLerp(bottomCell.color, leftCell.color, 1);
+        Color c2 = HexMetrics.TerraceLerp(bottomCell.color, rightCell.color, 1);
+        AddTriangle(bottom, v3, v4);
+        AddTriangleColor(bottomCell.color, c1, c2);
+
+        for(int i = 2; i <= HexMetrics.terraceSteps; i++)
+        {
+            Vector3 v33 = HexMetrics.TerraceLerp(bottom, left, i);
+            Vector3 v44 = HexMetrics.TerraceLerp(bottom, right, i);
+            Color c3 = HexMetrics.TerraceLerp(bottomCell.color, leftCell.color, i);
+            Color c4 = HexMetrics.TerraceLerp(bottomCell.color, rightCell.color, i);
+            AddQuad( v3, v4, v33, v44);
+            AddQuadColor(c1, c2, c3, c4);
+            v3 = v33;
+            v4 = v44;
+            c1 = c3;
+            c2 = c4;
+        }
+    }
+
+    void TriangulateSlopeWithCliff(Vector3 bottom, HexCell bottomCell, Vector3 left, HexCell leftCell, Vector3 right, HexCell rightCell)
+    {
+        if (leftCell.Elevation > rightCell.Elevation)
+        {
+            float b = 1f / (leftCell.Elevation - bottomCell.Elevation);
+            Vector3 boundary = Vector3.Lerp(bottom, left, b);
+            Color boundaryColor = Color.Lerp(bottomCell.color, leftCell.color, b);
+            if(rightCell.GetEdgeType(leftCell) == HexEdgeType.Slope)
+            {
+                TriangulateTerraces(right, rightCell.color, bottom, bottomCell.color, boundary,boundaryColor);
+                TriangulateTerraces(left, leftCell.color, right, rightCell.color, boundary,boundaryColor);
+            }
+            else
+            {
+
+            }
+        }
+    }
+
+    /// <summary>
+    /// 接替画三角形辅助类，begin，end，target必须以顺时针排列，begin，end构成一个阶梯化向量
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="beginColor"></param>
+    /// <param name="end"></param>
+    /// <param name="endColor"></param>
+    /// <param name="target"></param>
+    /// <param name="targetColor"></param>
+    void TriangulateTerraces(Vector3 begin,Color beginColor,Vector3 end,Color endColor,Vector3 target,Color targetColor)
+    {
+        Vector3 v1 = HexMetrics.TerraceLerp(begin, end, 1);
+        Color c1 = HexMetrics.TerraceLerp(beginColor, endColor, 1);
+        AddTriangle(begin, v1, target);
+        AddTriangleColor(beginColor, c1, targetColor);
+        for (int i = 2; i < HexMetrics.terraceSteps; i++)
+        {
+            Vector3 v11 = HexMetrics.TerraceLerp(begin, end, i);
+            Color c2 = HexMetrics.TerraceLerp(beginColor, endColor, i);
+            AddTriangle(v1, v11, target);
+            AddTriangleColor(c1, c2, targetColor);
+            v1 = v11;
+            c1 = c2;
+        }
+    }
     //添加一个三角形
     void AddTriangle(Vector3 v1,Vector3 v2,Vector3 v3)
     {
@@ -194,5 +386,14 @@ public class HexMesh : MonoBehaviour
         colors.Add(c1);
         colors.Add(c2);
         colors.Add(c2);
+    }
+
+    void AddQuadColor(Color c1,Color c2,Color c3,Color c4)
+    {
+        colors.Add(c1);
+        colors.Add(c2);
+        colors.Add(c3);
+        colors.Add(c4);
+
     }
 }

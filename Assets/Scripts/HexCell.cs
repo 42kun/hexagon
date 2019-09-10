@@ -48,11 +48,16 @@ public class HexCell : MonoBehaviour
     }
 
     //获取边界类型
-    public HexMetrics.HexEdgeType GetEdgeType (HexDirection d)
+    public HexEdgeType GetEdgeType (HexDirection d)
     {
         return HexMetrics.GetHexEdgeType(
             elevation,
             neighbors[(int)d].Elevation);
+    }
+
+    public HexEdgeType GetEdgeType(HexCell c)
+    {
+        return HexMetrics.GetHexEdgeType(Elevation, c.Elevation);
     }
 
 }

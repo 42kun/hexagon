@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum HexEdgeType
+{
+    Flat, Slope, Cliff
+}
 public static class HexMetrics
 {
     //外径
@@ -24,12 +28,6 @@ public static class HexMetrics
     public const float horizontalTerraceStepSize = 1f / terraceSteps;
     //每步垂直方向上的比例
     public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);
-
-    //连接情况(平坦，倾斜，陡峭）
-    public enum HexEdgeType
-    {
-        Flat,Slope,Cliff
-    }
 
     //六顶点坐标
     static Vector3[] corners =
