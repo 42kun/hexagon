@@ -88,7 +88,7 @@ public class HexGrid : MonoBehaviour
         label.rectTransform.anchoredPosition = new Vector2(position.x, position.z);
         //Text label = Instantiate<Text>(cellLabelPrefab, new Vector2(position.x, position.z), Quaternion.identity, gridCanvans.transform);
         label.text = cell.coordinates.ToStringOnSparateLines();
-        cell.uiRect = label.rectTransform;
+        cell.uiRect = label.rectTransform;//传递地址,所以可以在其他地方更改
     }
 
     ////为选中的六边形涂色
