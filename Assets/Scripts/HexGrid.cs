@@ -16,9 +16,14 @@ public class HexGrid : MonoBehaviour
     HexCell[] cells;
     Canvas gridCanvans;
     HexMesh hexMesh;
-    
+
+    //噪声贴图，用以为TextMetrics进行周转
+    public Texture2D noiseSource;
+
     private void Awake()
     {
+        HexMetrics.noiseSource = noiseSource;
+
         cells = new HexCell[height * width];
         gridCanvans = GetComponentInChildren<Canvas>();
         hexMesh = GetComponentInChildren<HexMesh>();
@@ -30,6 +35,13 @@ public class HexGrid : MonoBehaviour
                 CreateCell(x, z, i++);
             }
         }
+
+    }
+
+    //重编译？什么是重编译，为什么要做它？这段代码在干什么？
+    private void OnEnable()
+    {
+        HexMetrics.noiseSource = noiseSource;
     }
 
     private void Start()
@@ -89,6 +101,8 @@ public class HexGrid : MonoBehaviour
         //Text label = Instantiate<Text>(cellLabelPrefab, new Vector2(position.x, position.z), Quaternion.identity, gridCanvans.transform);
         label.text = cell.coordinates.ToStringOnSparateLines();
         cell.uiRect = label.rectTransform;//传递地址,所以可以在其他地方更改
+
+        cell.Elevation = 0;
     }
 
     ////为选中的六边形涂色
@@ -109,9 +123,9 @@ public class HexGrid : MonoBehaviour
         HexCoordinates coordinates = HexCoordinates.FromPosition(position);
         int index = coordinates.X + coordinates.Z * width + coordinates.Z / 2;
         return cells[index];
-
     }
 
+    //刷新网格
     public void Refresh()
     {
         hexMesh.Triangulate(cells);

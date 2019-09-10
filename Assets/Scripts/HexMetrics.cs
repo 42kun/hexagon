@@ -14,12 +14,12 @@ public static class HexMetrics
     public const float innerRadius = outerRadius * 0.866025404f;
 
     //内部非混合部分
-    public const float solidFactor = 0.75f;
+    public const float solidFactor = 0.8f;
     //内部混合部分
     public const float blendFactor = 1 - solidFactor;
 
     //标准高度
-    public const float elevationStep = 5f;
+    public const float elevationStep = 3f;
     //每个斜坡插值数量（梯形数量）
     public const int terracesPerSlope = 2;
     //每个斜坡由于插值被划分的数量（每个梯形占两个部分，最后一个尖角占一个部分）
@@ -28,6 +28,15 @@ public static class HexMetrics
     public const float horizontalTerraceStepSize = 1f / terraceSteps;
     //每步垂直方向上的比例
     public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);
+
+    //噪声贴图
+    public static Texture2D noiseSource;
+    //扰动强度
+    public const float cellPerturbStrength = 4f;
+    //缩放采样比例
+    public const float noiseScale = 0.003f;
+    //单元格海拔高度扰动
+    public const float elevationPeryurbStrength = 1.5f;
 
     //六顶点坐标
     static Vector3[] corners =
@@ -114,4 +123,12 @@ public static class HexMetrics
             default:return HexEdgeType.Cliff;
         }
     }
+
+    //双线性过滤，如何实现？为什么会返回一个Vector4？到底是什么意思？
+    public static Vector4 SampleNoise(Vector3 position)
+    {
+        return noiseSource.GetPixelBilinear(position.x * noiseScale, position.z * noiseScale);
+    }
+
+
 }

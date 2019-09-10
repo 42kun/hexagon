@@ -23,11 +23,21 @@ public class HexCell : MonoBehaviour
             elevation = value;
             Vector3 position = transform.localPosition;
             position.y = value * HexMetrics.elevationStep;
+            position.y += (HexMetrics.SampleNoise(position).y*2f - 1f)*HexMetrics.elevationPeryurbStrength;
             transform.localPosition = position;
 
             Vector3 uiPosition = uiRect.localPosition;
-            uiPosition.z = elevation * -HexMetrics.elevationStep;
+            uiPosition.z = -position.y;
             uiRect.localPosition = uiPosition;
+        }
+    }
+
+    //将cell的position单独拎出来
+    public Vector3 Position
+    {
+        get
+        {
+            return transform.localPosition;
         }
     }
 

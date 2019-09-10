@@ -16,7 +16,7 @@ public class HexMesh : MonoBehaviour
     List<Color> colors;
     //碰撞盒
     MeshCollider meshCollider;
-
+    
     private void Awake()
     {
         GetComponent<MeshFilter>().mesh = hexMesh = new Mesh();
@@ -58,15 +58,25 @@ public class HexMesh : MonoBehaviour
     //传入六边形的一个方向，渲染这个方向相关的Mesh
     void Triangulate(HexDirection d,HexCell cell)
     {
-        Vector3 center = cell.transform.localPosition;
+        Vector3 center = cell.Position;
         Vector3 v1 = center+HexMetrics.GetFirstSolidCornet(d);
         Vector3 v2 = center+HexMetrics.GetSecondSolidCornet(d);
 
+        //将三角形细分为三分，以便于更好地随机化
+        Vector3 e1 = Vector3.Lerp(v1, v2, 1/3f);
+        Vector3 e2 = Vector3.Lerp(v1, v2, 2/3f);
+
         //内部三角形，颜色为纯色
-        AddTriangle(center, v1, v2);
+        AddTriangle(center, v1, e1);
         AddTriangleColor(cell.color);
 
-        TriangulateConnection(d, cell, v1, v2);
+        AddTriangle(center, e1, e2);
+        AddTriangleColor(cell.color);
+
+        AddTriangle(center, e2, v2);
+        AddTriangleColor(cell.color);
+
+        TriangulateConnection(d, cell, v1, e1, e2, v2);
     }
 
     /// <summary>
@@ -76,7 +86,7 @@ public class HexMesh : MonoBehaviour
     /// <param name="cell">六边形</param>
     /// <param name="v1">六边形内上顶点</param>
     /// <param name="v2">六边形内下顶点</param>
-    void TriangulateConnection(HexDirection direction, HexCell cell, Vector3 v1, Vector3 v2)
+    void TriangulateConnection(HexDirection direction, HexCell cell, Vector3 v1, Vector3 e1, Vector3 e2, Vector3 v2)
     {
         if (direction <= HexDirection.SE && cell.GetNeighbor(direction)!=null) { 
             //添加矩形连接桥
@@ -84,17 +94,29 @@ public class HexMesh : MonoBehaviour
             Vector3 bright = HexMetrics.GetBirdge(direction);
             Vector3 v3 = v1 + bright;
             Vector3 v4 = v2 + bright;
+
             //将对面连接点添加高度修正
-            v3.y = v4.y = neighbor.Elevation * HexMetrics.elevationStep;
+            v3.y = v4.y = neighbor.Position.y;
+
+            Vector3 e3 = Vector3.Lerp(v3, v4, 1/3f);
+            Vector3 e4 = Vector3.Lerp(v3, v4, 2/3f);
 
             //限制只在倾斜时进行阶梯化
-            if(cell.GetEdgeType(direction) == HexEdgeType.Slope)
+            if (cell.GetEdgeType(direction) == HexEdgeType.Slope)
             {
-                TriangulateEdgeTerraces(v1, v2, cell, v3, v4, neighbor);
+                TriangulateEdgeTerraces(v1, e1, cell, v3, e3, neighbor);
+                TriangulateEdgeTerraces(e1, e2, cell, e3, e4, neighbor);
+                TriangulateEdgeTerraces(e2, v2, cell, e4, v4, neighbor);
             }
             else
             {
-                AddQuad(v1, v2, v3, v4);
+                //AddQuad(v1, v2, v3, v4);
+                //AddQuadColor(cell.color, neighbor.color);
+                AddQuad(v1, e1, v3, e3);
+                AddQuadColor(cell.color, neighbor.color);
+                AddQuad(e1, e2, e3, e4);
+                AddQuadColor(cell.color, neighbor.color);
+                AddQuad(e2,v2,e4,v4);
                 AddQuadColor(cell.color, neighbor.color);
             }
 
@@ -104,7 +126,7 @@ public class HexMesh : MonoBehaviour
             if (nextNeighbor)
             {
                 Vector3 v5 = v2 + HexMetrics.GetBirdge(direction.Next());
-                v5.y = nextNeighbor.Elevation * HexMetrics.elevationStep;
+                v5.y = nextNeighbor.Position.y;
                 //TriangulateCorner(v2, cell, v4, neighbor, v5, nextNeighbor);
                 //找出最小的一个cell，然后顺时针将三个cell传入
                 if(cell.Elevation <= neighbor.Elevation)
@@ -195,7 +217,6 @@ public class HexMesh : MonoBehaviour
         }
         else if(leftEdgeType == HexEdgeType.Cliff && rightEdgeType == HexEdgeType.Slope)
         {
-            //无法旋转，只能单独处理
             TriangulateSlopeWithCliff(bottom, bottomCell, left, leftCell, right, rightCell);
         }
         else if(leftEdgeType == HexEdgeType.Cliff && rightEdgeType == HexEdgeType.Cliff)
@@ -293,12 +314,21 @@ public class HexMesh : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 处理sc的情况
+    /// </summary>
+    /// <param name="bottom"></param>
+    /// <param name="bottomCell"></param>
+    /// <param name="left"></param>
+    /// <param name="leftCell"></param>
+    /// <param name="right"></param>
+    /// <param name="rightCell"></param>
     void TriangulateSlopeWithCliff(Vector3 bottom, HexCell bottomCell, Vector3 left, HexCell leftCell, Vector3 right, HexCell rightCell)
     {
         if (leftCell.Elevation > rightCell.Elevation)
         {
             float b = 1f / (leftCell.Elevation - bottomCell.Elevation);
-            Vector3 boundary = Vector3.Lerp(bottom, left, b);
+            Vector3 boundary = Vector3.Lerp(Perturb(bottom), Perturb(left), b);
             Color boundaryColor = Color.Lerp(bottomCell.color, leftCell.color, b);
             if(rightCell.GetEdgeType(leftCell) == HexEdgeType.Slope)
             {
@@ -308,14 +338,14 @@ public class HexMesh : MonoBehaviour
             else
             {
                 TriangulateTerraces(right, rightCell.color, bottom, bottomCell.color, boundary, boundaryColor);
-                AddTriangle(left, right, boundary);
+                AddTriangleNoPerturb(Perturb(left), Perturb(right), boundary);
                 AddTriangleColor(leftCell.color, rightCell.color, boundaryColor);
             }
         }
         else
         {
             float b = 1f / (rightCell.Elevation - bottomCell.Elevation);
-            Vector3 boundary = Vector3.Lerp(bottom, right, b);
+            Vector3 boundary = Vector3.Lerp(Perturb(bottom), Perturb(right), b);
             Color boundaryColor = Color.Lerp(bottomCell.color, rightCell.color, b);
             if (rightCell.GetEdgeType(leftCell) == HexEdgeType.Slope)
             {
@@ -325,7 +355,7 @@ public class HexMesh : MonoBehaviour
             else
             {
                 TriangulateTerraces(bottom, bottomCell.color, left, leftCell.color, boundary, boundaryColor);
-                AddTriangle(left, right, boundary);
+                AddTriangleNoPerturb(Perturb(left), Perturb(right), boundary);
                 AddTriangleColor(leftCell.color, rightCell.color, boundaryColor);
             }
         }
@@ -334,30 +364,55 @@ public class HexMesh : MonoBehaviour
     /// <summary>
     /// 接替画三角形辅助类，begin，end，target必须以顺时针排列，begin，end构成一个阶梯化向量
     /// </summary>
-    /// <param name="begin"></param>
+    /// <param name="begin">标准点</param>
     /// <param name="beginColor"></param>
-    /// <param name="end"></param>
+    /// <param name="end">标准点</param>
     /// <param name="endColor"></param>
     /// <param name="target"></param>
     /// <param name="targetColor"></param>
     void TriangulateTerraces(Vector3 begin,Color beginColor,Vector3 end,Color endColor,Vector3 target,Color targetColor)
     {
-        Vector3 v1 = HexMetrics.TerraceLerp(begin, end, 1);
+        Vector3 pbegin = Perturb(begin);
+        //Vector3 pend = Perturb(end);
+        Vector3 v1 = Perturb(HexMetrics.TerraceLerp(begin, end, 1));
         Color c1 = HexMetrics.TerraceLerp(beginColor, endColor, 1);
-        AddTriangle(begin, v1, target);
+        AddTriangleNoPerturb(pbegin, v1, target);
         AddTriangleColor(beginColor, c1, targetColor);
         for (int i = 2; i <= HexMetrics.terraceSteps; i++)
         {
-            Vector3 v11 = HexMetrics.TerraceLerp(begin, end, i);
+            Vector3 v11 = Perturb(HexMetrics.TerraceLerp(begin, end, i));
             Color c2 = HexMetrics.TerraceLerp(beginColor, endColor, i);
-            AddTriangle(v1, v11, target);
+            AddTriangleNoPerturb(v1, v11, target);
             AddTriangleColor(c1, c2, targetColor);
             v1 = v11;
             c1 = c2;
         }
     }
-    //添加一个三角形
+
+    /// <summary>
+    /// 添加一个三角形，采用顶点扰动的方式
+    /// </summary>
+    /// <param name="v1"></param>
+    /// <param name="v2"></param>
+    /// <param name="v3"></param>
     void AddTriangle(Vector3 v1,Vector3 v2,Vector3 v3)
+    {
+        int vertexIndex = vertices.Count;
+        vertices.Add(Perturb(v1));
+        vertices.Add(Perturb(v2));
+        vertices.Add(Perturb(v3));
+        triangles.Add(vertexIndex);
+        triangles.Add(vertexIndex + 1);
+        triangles.Add(vertexIndex + 2);
+    }
+
+    /// <summary>
+    /// 添加一个三角形，顶点不进行扰动
+    /// </summary>
+    /// <param name="v1"></param>
+    /// <param name="v2"></param>
+    /// <param name="v3"></param>
+    void AddTriangleNoPerturb(Vector3 v1,Vector3 v2,Vector3 v3)
     {
         int vertexIndex = vertices.Count;
         vertices.Add(v1);
@@ -388,10 +443,10 @@ public class HexMesh : MonoBehaviour
     void AddQuad(Vector3 v1,Vector3 v2,Vector3 v3,Vector3 v4)
     {
         int vertexIndex = vertices.Count;
-        vertices.Add(v1);
-        vertices.Add(v2);
-        vertices.Add(v3);
-        vertices.Add(v4);
+        vertices.Add(Perturb(v1));
+        vertices.Add(Perturb(v2));
+        vertices.Add(Perturb(v3));
+        vertices.Add(Perturb(v4));
 
         triangles.Add(vertexIndex);
         triangles.Add(vertexIndex + 2);
@@ -417,5 +472,19 @@ public class HexMesh : MonoBehaviour
         colors.Add(c3);
         colors.Add(c4);
 
+    }
+
+
+    ////处理噪声
+
+    //对点进行扰动
+    Vector3 Perturb(Vector3 position)
+    {
+        Vector4 sample = HexMetrics.SampleNoise(position);
+        position.x += (sample.x * 2f - 1) * HexMetrics.cellPerturbStrength;
+        //position.y += (sample.y * 2f - 1) * HexMetrics.cellPerturbStrength;
+        position.z += (sample.z * 2f - 1) * HexMetrics.cellPerturbStrength;
+
+        return position;
     }
 }
