@@ -36,7 +36,7 @@ public static class HexMetrics
     //缩放采样比例
     public const float noiseScale = 0.003f;
     //单元格海拔高度扰动
-    public const float elevationPeryurbStrength = 1.5f;
+    public const float elevationPerturbStrength = 1.5f;
 
     //六顶点坐标
     static Vector3[] corners =
@@ -124,7 +124,7 @@ public static class HexMetrics
         }
     }
 
-    //双线性过滤，如何实现？为什么会返回一个Vector4？到底是什么意思？
+    //双线性过滤
     public static Vector4 SampleNoise(Vector3 position)
     {
         return noiseSource.GetPixelBilinear(position.x * noiseScale, position.z * noiseScale);

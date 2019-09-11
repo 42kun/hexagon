@@ -38,7 +38,7 @@ public class HexGrid : MonoBehaviour
 
     }
 
-    //重编译？什么是重编译，为什么要做它？这段代码在干什么？
+    //以后再研究
     private void OnEnable()
     {
         HexMetrics.noiseSource = noiseSource;
