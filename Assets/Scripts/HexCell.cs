@@ -5,12 +5,12 @@ using UnityEngine;
 public class HexCell : MonoBehaviour
 {
     public HexCoordinates coordinates;
-    public Color color;
     public RectTransform uiRect;
 
-    //高度，私有变量
-    int elevation;
+    public HexGridChunk chunk;
 
+    //高度，私有变量
+    int elevation = int.MinValue;
     //设置高度
     public int Elevation
     {
@@ -20,6 +20,11 @@ public class HexCell : MonoBehaviour
         }
         set
         {
+            //在高度改变时刷新区块
+            if(elevation == value)
+            {
+                return;
+            }
             elevation = value;
             Vector3 position = transform.localPosition;
             position.y = value * HexMetrics.elevationStep;
@@ -29,6 +34,27 @@ public class HexCell : MonoBehaviour
             Vector3 uiPosition = uiRect.localPosition;
             uiPosition.z = -position.y;
             uiRect.localPosition = uiPosition;
+            Refresh();
+        }
+    }
+
+    //设置颜色
+    Color color;
+    public Color Color
+    {
+        get
+        {
+            return color;
+        }
+        set
+        {
+            //在颜色改变时刷新网格
+            if(color == value)
+            {
+                return;
+            }
+            color = value;
+            Refresh();
         }
     }
 
@@ -40,6 +66,7 @@ public class HexCell : MonoBehaviour
             return transform.localPosition;
         }
     }
+
 
     [SerializeField]
     HexCell[] neighbors;
@@ -68,6 +95,28 @@ public class HexCell : MonoBehaviour
     public HexEdgeType GetEdgeType(HexCell c)
     {
         return HexMetrics.GetHexEdgeType(Elevation, c.Elevation);
+    }
+
+    //会重新刷新本区块网格
+    void Refresh()
+    {
+        //防止在初始化时刷新网格
+        //cell初始化完毕后才会添加chunk。这样可以很好的避免初始化时的操作触发网格刷新
+        //没有初始化完六边形有时会获得不到某方向上的cell，导致空引用
+
+        //私货：如果边缘发生更改，那么则将边缘邻居的refreshEnable设置为true
+        if (chunk)
+        {
+            chunk.Refresh();
+            for (int i = 0; i < neighbors.Length; i++)
+            {
+                if (neighbors[i] != null && neighbors[i].chunk != chunk)
+                {
+                    neighbors[i].chunk.refreshEnable = true;
+                }
+            }
+        }
+
     }
 
 }

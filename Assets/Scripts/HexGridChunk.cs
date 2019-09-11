@@ -9,6 +9,8 @@ public class HexGridChunk : MonoBehaviour
     HexMesh hexMesh;
     Canvas gridCanvas;
 
+    public bool refreshEnable = true;
+
     void Awake()
     {
         gridCanvas = GetComponentInChildren<Canvas>();
@@ -17,16 +19,24 @@ public class HexGridChunk : MonoBehaviour
         cells = new HexCell[HexMetrics.chunkSizeX * HexMetrics.chunkSizeZ];
     }
 
-    void Start()
-    {
-        hexMesh.Triangulate(cells);
-    }
+    //void Start()
+    //{
+    //    hexMesh.Triangulate(cells);
+    //}
 
     void Update()
     {
         
     }
 
+    private void LateUpdate()
+    {
+        if (refreshEnable)
+        {
+            hexMesh.Triangulate(cells);
+            refreshEnable = false;
+        }
+    }
 
     //通过索引，将HexCell添加至Chunk
     public void AddCell(int index,HexCell cell)
@@ -35,11 +45,13 @@ public class HexGridChunk : MonoBehaviour
         cells[index] = cell;
         cell.transform.SetParent(transform, false);
         cell.uiRect.SetParent(gridCanvas.transform, false);
+        cell.chunk = this;
     }
 
     //刷新网格
     public void Refresh()
     {
-        hexMesh.Triangulate(cells);
+        //设置允许刷新
+        refreshEnable = true;
     }
 }

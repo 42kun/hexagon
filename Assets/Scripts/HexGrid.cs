@@ -95,7 +95,7 @@ public class HexGrid : MonoBehaviour
         cell.transform.localPosition = position;
         //HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab,position,Quaternion.identity,transform);
         cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
-        cell.color = defaultColor;
+        cell.Color = defaultColor;
 
         if (x > 0)
         {
@@ -160,7 +160,5 @@ public class HexGrid : MonoBehaviour
         int index = coordinates.X + coordinates.Z * cellCountX + coordinates.Z / 2;
         return cells[index];
     }
-
-
 
 }
