@@ -38,6 +38,11 @@ public static class HexMetrics
     //单元格海拔高度扰动
     public const float elevationPerturbStrength = 1.5f;
 
+    //区块大小
+    public const int chunkSizeX = 5, chunkSizeZ = 5;
+    
+
+
     //六顶点坐标
     static Vector3[] corners =
     {
