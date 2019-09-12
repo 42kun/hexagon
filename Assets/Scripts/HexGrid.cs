@@ -9,10 +9,10 @@ public class HexGrid : MonoBehaviour
     //public int height = 6;
 
     //六边形总数，由区块数与区块大小决定
-    int cellCountX,cellCountZ;
+    public int cellCountX,cellCountZ;
 
     //区块数，由这里定义
-    public const int chunkCountX = 4, chunkCountZ = 3;
+    public const int chunkCountX = 20, chunkCountZ = 20;
 
 
     public HexCell cellPrefab;
@@ -159,6 +159,16 @@ public class HexGrid : MonoBehaviour
         HexCoordinates coordinates = HexCoordinates.FromPosition(position);
         int index = coordinates.X + coordinates.Z * cellCountX + coordinates.Z / 2;
         return cells[index];
+    }
+
+    //隐藏网格中的所有Label
+
+    public void ShowUI(bool visible)
+    {
+        foreach(HexGridChunk chunk in chunks)
+        {
+            chunk.ShowUI(visible);
+        }
     }
 
 }

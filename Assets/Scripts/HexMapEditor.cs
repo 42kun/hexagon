@@ -13,7 +13,19 @@ public class HexMapEditor : MonoBehaviour
     //当前选中的海拔高度
     private int activeElevation;
 
-    public Slider slider;
+    public Slider elevationSlider;
+    public Slider brushSlider;
+
+    //是否显示标签
+    public bool showUI = false;
+    //是否开启高度编辑功能
+    public bool editElevation = true;
+
+    public Toggle labelSwitch;
+    public Toggle elevationSwitch;
+
+    //笔刷大小
+    public int brushSize = 1;
 
 
     private void Awake()
@@ -24,7 +36,6 @@ public class HexMapEditor : MonoBehaviour
 
     private void Update()
     {
-        //Debug.Log(EventSystem.current.IsPointerOverGameObject());
         if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject()) 
         {
             HandleInput();
@@ -43,17 +54,42 @@ public class HexMapEditor : MonoBehaviour
 
     public void SelectColor(int index)
     {
-        activeColor = colors[index];
+        if (index >= 0)
+        {
+            activeColor = colors[index];
+        }
     }
 
     public void SetElevation()
     {
-        activeElevation = (int)slider.value;
+        if (editElevation)
+        {
+            activeElevation = (int)elevationSlider.value;
+        }
     }
 
     void EditCell(HexCell cell)
     {
         cell.Color = activeColor;
         cell.Elevation = activeElevation;
+    }
+
+    // 设置UI是否显示
+    public void ShouUI()
+    {
+        showUI = labelSwitch.isOn;
+        hexGrid.ShowUI(showUI);
+    }
+
+    // 设置是否开启地形编辑
+    public void EditElevation()
+    {
+        editElevation = elevationSwitch.isOn;
+    }
+
+    //设置笔刷大小
+    public void SetBrushSize()
+    {
+        brushSize = (int)brushSlider.value;
     }
 }
