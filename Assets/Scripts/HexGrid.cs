@@ -12,7 +12,7 @@ public class HexGrid : MonoBehaviour
     public int cellCountX,cellCountZ;
 
     //区块数，由这里定义
-    public const int chunkCountX = 20, chunkCountZ = 20;
+    public const int chunkCountX = 5, chunkCountZ = 5;
 
 
     public HexCell cellPrefab;
@@ -152,13 +152,24 @@ public class HexGrid : MonoBehaviour
         chunk.AddCell(localX + HexMetrics.chunkSizeX * localZ,cell);
     }
 
-    //获取选中的六边形
+    //根据点击的点，获取选中的六边形
     public HexCell GetCell(Vector3 position)
     {
         position = transform.InverseTransformPoint(position);
         HexCoordinates coordinates = HexCoordinates.FromPosition(position);
         int index = coordinates.X + coordinates.Z * cellCountX + coordinates.Z / 2;
         return cells[index];
+    }
+
+    //根据x与z坐标，获取cell
+    public HexCell GetCell(int x,int z)
+    {
+        if (x >= cellCountX-z/2 || x<-z/2 || z<0 || z>=cellCountZ)
+        {
+            return null;
+        }
+        int index = x + z * cellCountX + z / 2;
+        return index < cells.Length && index>=0 ? cells[index] : null;
     }
 
     //隐藏网格中的所有Label

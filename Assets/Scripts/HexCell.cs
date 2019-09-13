@@ -11,6 +11,7 @@ public class HexCell : MonoBehaviour
 
     //高度，私有变量
     int elevation = int.MinValue;
+
     //设置高度
     public int Elevation
     {
@@ -118,5 +119,24 @@ public class HexCell : MonoBehaviour
         }
 
     }
+
+    // 靠扩散很难解决问题
+    //public void EditCell(int weight,int elevation,Color color)
+    //{
+    //    Debug.Log(weight);
+    //    weight--;wwdww
+    //    Elevation = elevation;
+    //    Color = color;
+    //    if (weight >= 1)
+    //    {
+    //        for (int j = 0; j < neighbors.Length; j++)
+    //        {
+    //            if (neighbors[j] != null)
+    //            {
+    //                neighbors[j].EditCell(weight, elevation, color);
+    //            }
+    //        }
+    //    }
+    //}
 
 }

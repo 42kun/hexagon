@@ -24,6 +24,7 @@ public class HexMapEditor : MonoBehaviour
     public Toggle labelSwitch;
     public Toggle elevationSwitch;
 
+
     //笔刷大小
     public int brushSize = 1;
 
@@ -47,7 +48,7 @@ public class HexMapEditor : MonoBehaviour
         RaycastHit hit; //接收射线与物体碰撞信息
         if(Physics.Raycast(inputRay,out hit)) //out表示引用
         {
-            EditCell(hexGrid.GetCell(hit.point));
+            EditCells(hexGrid.GetCell(hit.point));
 
         }
     }
@@ -68,10 +69,36 @@ public class HexMapEditor : MonoBehaviour
         }
     }
 
+    // 编辑网格，根据从点击坐标通过hexGrid.GetCell推算出的网格来更新
+    void EditCells(HexCell cell)
+    {
+        //根据笔刷大小，批量更新网格
+        //cell.EditCell(brushSize, activeElevation, activeColor);
+
+        int centerX = cell.coordinates.X;
+        int centerZ = cell.coordinates.Z;
+        int weight = brushSize - 1;
+
+        for(int i = 0; i <= weight; i++)
+        {
+            for(int j = 0; j <= weight; j++)
+            {
+                if (Mathf.Abs(i + j) <= weight) EditCell(hexGrid.GetCell(centerX + i, centerZ + j));
+                if (Mathf.Abs(-i + j) <= weight)  EditCell(hexGrid.GetCell(centerX - i, centerZ + j));
+                if (Mathf.Abs(-i - j) <= weight) EditCell(hexGrid.GetCell(centerX - i, centerZ - j));
+                if (Mathf.Abs(i - j) <= weight) EditCell(hexGrid.GetCell(centerX + i, centerZ - j));
+            }
+        }
+    }
+
     void EditCell(HexCell cell)
     {
-        cell.Color = activeColor;
+        if (cell == null)
+        {
+            return;
+        }
         cell.Elevation = activeElevation;
+        cell.Color = activeColor;
     }
 
     // 设置UI是否显示
