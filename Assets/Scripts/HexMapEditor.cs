@@ -20,6 +20,8 @@ public class HexMapEditor : MonoBehaviour
     public bool showUI = false;
     //是否开启高度编辑功能
     public bool editElevation = true;
+    //是否开启颜色编辑功能
+    public bool editColor = true;
 
     public Toggle labelSwitch;
     public Toggle elevationSwitch;
@@ -57,7 +59,12 @@ public class HexMapEditor : MonoBehaviour
     {
         if (index >= 0)
         {
+            editColor = true;
             activeColor = colors[index];
+        }
+        else
+        {
+            editColor = false;
         }
     }
 
@@ -97,8 +104,14 @@ public class HexMapEditor : MonoBehaviour
         {
             return;
         }
-        cell.Elevation = activeElevation;
-        cell.Color = activeColor;
+        if (editElevation)
+        {
+            cell.Elevation = activeElevation;
+        }
+        if (editColor)
+        {
+            cell.Color = activeColor;
+        }
     }
 
     // 设置UI是否显示
@@ -112,6 +125,7 @@ public class HexMapEditor : MonoBehaviour
     public void EditElevation()
     {
         editElevation = elevationSwitch.isOn;
+        activeElevation = (int)elevationSlider.value;
     }
 
     //设置笔刷大小
