@@ -25,4 +25,32 @@ public static class HexDirectionExtensions
     {
         return direction == HexDirection.NW ? HexDirection.NE : (direction + 1);
     }
+    public static HexDirection Next2(this HexDirection direction)
+    {
+        if (direction == HexDirection.NW)
+        {
+            return HexDirection.E;
+        }else if (direction == HexDirection.W)
+        {
+            return HexDirection.NE;
+        }
+        else
+        {
+            return (direction + 2);
+        }
+    }
+    public static HexDirection Previous2(this HexDirection direction)
+    {
+        if (direction == HexDirection.NE)
+        {
+            return HexDirection.W;
+        }else if (direction == HexDirection.E)
+        {
+            return HexDirection.NW;
+        }
+        else
+        {
+            return direction - 2;
+        }
+    }
 }

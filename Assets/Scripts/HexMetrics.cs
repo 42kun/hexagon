@@ -32,7 +32,7 @@ public static class HexMetrics
     //噪声贴图
     public static Texture2D noiseSource;
     //扰动强度
-    public const float cellPerturbStrength = 4f;
+    public const float cellPerturbStrength = 3f;
     //缩放采样比例
     public const float noiseScale = 0.003f;
     //单元格海拔高度扰动
@@ -40,7 +40,9 @@ public static class HexMetrics
 
     //区块大小
     public const int chunkSizeX = 5, chunkSizeZ = 5;
-    
+
+    //河床降低高度
+    public const float streamBedElevationOffset = -1f;
 
 
     //六顶点坐标
@@ -135,5 +137,15 @@ public static class HexMetrics
         return noiseSource.GetPixelBilinear(position.x * noiseScale, position.z * noiseScale);
     }
 
+    //进行顶点扰动
+    public static Vector3 Perturb(Vector3 position)
+    {
+        Vector4 sample = SampleNoise(position);
+        position.x += (sample.x * 2f - 1) * cellPerturbStrength;
+        //position.y += (sample.y * 2f - 1) * HexMetrics.cellPerturbStrength;
+        position.z += (sample.z * 2f - 1) * cellPerturbStrength;
+
+        return position;
+    }
 
 }

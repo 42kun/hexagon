@@ -6,7 +6,7 @@ public class HexGridChunk : MonoBehaviour
 {
     HexCell[] cells;
 
-    HexMesh hexMesh;
+    public HexMesh terrain;
     Canvas gridCanvas;
 
     public bool refreshEnable = true;
@@ -14,7 +14,7 @@ public class HexGridChunk : MonoBehaviour
     void Awake()
     {
         gridCanvas = GetComponentInChildren<Canvas>();
-        hexMesh = GetComponentInChildren<HexMesh>();
+        terrain = GetComponentInChildren<HexMesh>();
 
         cells = new HexCell[HexMetrics.chunkSizeX * HexMetrics.chunkSizeZ];
 
@@ -35,7 +35,7 @@ public class HexGridChunk : MonoBehaviour
     {
         if (refreshEnable)
         {
-            hexMesh.Triangulate(cells);
+            terrain.Triangulate(cells);
             refreshEnable = false;
         }
     }
